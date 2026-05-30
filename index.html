@@ -1,0 +1,1302 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0d1117">
+<meta name="description" content="Pediatrik antropometri ve büyüme aracı">
+<title>Antropometri · Cep</title>
+<link rel="manifest" href="manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d1117;
+    --bg-elev: #161b22;
+    --bg-elev-2: #1c232c;
+    --border: #2a3038;
+    --text: #e6edf3;
+    --text-mute: #8b949e;
+    --text-dim: #6e7681;
+    --accent: #7ee2c1;
+    --accent-dim: #4d9b86;
+    --warn: #d4a574;
+    --crit: #e06c75;
+    --info: #79c0ff;
+    --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+    --sans: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: var(--sans); background: var(--bg);
+    color: var(--text); line-height: 1.5;
+    min-height: 100vh; padding-bottom: env(safe-area-inset-bottom);
+    -webkit-tap-highlight-color: transparent;
+  }
+  header {
+    border-bottom: 1px solid var(--border); background: var(--bg);
+    position: sticky; top: 0; z-index: 50;
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  }
+  .header-inner { max-width: 880px; margin: 0 auto; padding: 12px 16px 0; }
+  .brand {
+    display: flex; align-items: baseline; justify-content: space-between;
+    gap: 10px; margin-bottom: 10px;
+  }
+  .brand-left { display: flex; align-items: baseline; gap: 10px; }
+  .brand-mark {
+    font-family: var(--mono); font-weight: 700; font-size: 17px;
+    color: var(--accent); letter-spacing: -0.02em;
+  }
+  .brand-mark::before { content: '▍'; margin-right: 6px; color: var(--accent); }
+  .brand-sub {
+    font-family: var(--mono); font-size: 11px; color: var(--text-dim);
+    letter-spacing: 0.05em; text-transform: uppercase;
+  }
+  .btn-reset {
+    background: none; border: 1px solid var(--border); color: var(--text-mute);
+    font-family: var(--mono); font-size: 11px; padding: 5px 10px;
+    border-radius: 5px; cursor: pointer; letter-spacing: 0.04em;
+  }
+  .btn-reset:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* Sticky hasta bar */
+  .pt-bar {
+    background: var(--bg-elev); border: 1px solid var(--border);
+    border-radius: 8px; padding: 10px 12px; margin-bottom: 10px;
+  }
+  .pt-row {
+    display: grid; grid-template-columns: 1fr 1fr 1fr 1fr;
+    gap: 8px; align-items: center;
+  }
+  @media (max-width: 540px) {
+    .pt-row { grid-template-columns: 1fr 1fr; gap: 8px; }
+  }
+  .pt-field { display: flex; flex-direction: column; gap: 3px; }
+  .pt-field label {
+    font-family: var(--mono); font-size: 9.5px; color: var(--text-dim);
+    letter-spacing: 0.04em; text-transform: uppercase;
+  }
+  .pt-field input, .pt-field select {
+    background: var(--bg); border: 1px solid var(--border);
+    color: var(--accent); padding: 6px 9px; border-radius: 4px;
+    font-family: var(--mono); font-size: 13px; font-weight: 600;
+    -webkit-appearance: none; appearance: none; width: 100%;
+  }
+  .pt-field input:focus, .pt-field select:focus { outline: none; border-color: var(--accent-dim); }
+  input[type=number]::-webkit-inner-spin-button,
+  input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+  input[type=number] { -moz-appearance: textfield; }
+
+  /* Cinsiyet toggle */
+  .sex-toggle {
+    display: flex; background: var(--bg); border: 1px solid var(--border);
+    border-radius: 4px; padding: 2px; height: 100%;
+  }
+  .sex-btn {
+    flex: 1; background: none; border: none; color: var(--text-mute);
+    font-family: var(--mono); font-size: 13px; font-weight: 600;
+    padding: 4px; cursor: pointer; border-radius: 3px;
+  }
+  .sex-btn.active {
+    background: var(--bg-elev-2); color: var(--accent);
+  }
+
+  .bsa-row {
+    display: flex; justify-content: space-between; align-items: baseline;
+    margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--border);
+    gap: 8px; flex-wrap: wrap;
+  }
+  .bsa-item {
+    display: flex; align-items: baseline; gap: 6px;
+  }
+  .bsa-label {
+    font-family: var(--mono); font-size: 10px; color: var(--text-dim);
+    letter-spacing: 0.04em; text-transform: uppercase;
+  }
+  .bsa-val {
+    font-family: var(--mono); font-size: 14px; font-weight: 600;
+    color: var(--accent);
+  }
+
+  .tabs {
+    display: flex; gap: 0; overflow-x: auto; scrollbar-width: none;
+    margin: 0 -16px; padding: 0 16px;
+  }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab {
+    background: none; border: none; color: var(--text-mute);
+    font-family: var(--mono); font-size: 12px; font-weight: 500;
+    padding: 10px 14px; cursor: pointer; border-bottom: 2px solid transparent;
+    white-space: nowrap; letter-spacing: 0.02em;
+  }
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  main { max-width: 880px; margin: 0 auto; padding: 16px 16px 80px; }
+
+  .panel { display: none; }
+  .panel.active { display: block; animation: fade 0.15s ease-out; }
+  @keyframes fade {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .card {
+    background: var(--bg-elev); border: 1px solid var(--border);
+    border-radius: 10px; padding: 16px; margin-bottom: 12px;
+  }
+  .card-head {
+    display: flex; align-items: baseline; justify-content: space-between;
+    margin-bottom: 12px; gap: 12px;
+  }
+  .card-title {
+    font-family: var(--mono); font-size: 12px; font-weight: 600;
+    color: var(--text); letter-spacing: 0.06em; text-transform: uppercase;
+  }
+  .card-tag {
+    font-family: var(--mono); font-size: 10px; color: var(--text-dim);
+    letter-spacing: 0.08em; text-transform: uppercase;
+  }
+
+  /* Z-skor sonuç satırı */
+  .z-row {
+    display: grid; grid-template-columns: 110px 1fr auto;
+    gap: 10px; align-items: center;
+    padding: 10px 0; border-bottom: 1px solid var(--border);
+  }
+  .z-row:last-child { border-bottom: none; }
+  .z-name {
+    font-family: var(--mono); font-size: 11px;
+    color: var(--text); letter-spacing: 0.04em;
+    text-transform: uppercase; font-weight: 600;
+  }
+  .z-name .meta {
+    display: block; font-size: 10px; color: var(--text-dim);
+    font-weight: 400; margin-top: 2px;
+  }
+  .z-vals {
+    display: flex; gap: 14px; flex-wrap: wrap;
+  }
+  .z-val {
+    font-family: var(--mono); font-size: 14px; font-weight: 600;
+    color: var(--accent);
+  }
+  .z-val .lbl {
+    font-size: 9.5px; color: var(--text-dim); font-weight: 400;
+    text-transform: uppercase; margin-right: 4px;
+  }
+  .z-val.warn { color: var(--warn); }
+  .z-val.crit { color: var(--crit); }
+  .z-val.mute { color: var(--text-mute); }
+
+  .z-cat {
+    font-family: var(--mono); font-size: 11px;
+    padding: 3px 8px; border-radius: 4px; white-space: nowrap;
+  }
+  .z-cat.ok { background: rgba(126, 226, 193, 0.15); color: var(--accent); }
+  .z-cat.warn { background: rgba(212, 165, 116, 0.15); color: var(--warn); }
+  .z-cat.crit { background: rgba(224, 108, 117, 0.15); color: var(--crit); }
+  .z-cat.info { background: rgba(121, 192, 255, 0.15); color: var(--info); }
+  .z-cat.mute { background: rgba(139, 148, 158, 0.1); color: var(--text-mute); }
+
+  /* WHO/CDC toggle */
+  .ref-toggle {
+    display: flex; gap: 0; background: var(--bg);
+    border: 1px solid var(--border); border-radius: 6px;
+    padding: 3px; margin-bottom: 14px; max-width: 280px;
+  }
+  .ref-btn {
+    flex: 1; background: none; border: none;
+    color: var(--text-mute); font-family: var(--mono);
+    font-size: 11px; font-weight: 500;
+    padding: 6px 10px; border-radius: 4px; cursor: pointer;
+  }
+  .ref-btn.active {
+    background: var(--bg-elev-2); color: var(--accent);
+  }
+
+  .note {
+    font-size: 12.5px; color: var(--text-mute);
+    line-height: 1.6; margin: 8px 0;
+  }
+  .note strong { color: var(--text); }
+  .note .num { font-family: var(--mono); color: var(--accent); font-weight: 600; }
+  .small-note {
+    font-family: var(--mono); font-size: 10.5px; color: var(--text-dim);
+    margin-top: 8px; line-height: 1.5;
+  }
+
+  .alert {
+    padding: 10px 12px; border-radius: 6px;
+    font-size: 12.5px; line-height: 1.55;
+    margin: 10px 0;
+  }
+  .alert.warn { background: rgba(212, 165, 116, 0.08); border-left: 3px solid var(--warn); color: var(--warn); }
+  .alert.crit { background: rgba(224, 108, 117, 0.08); border-left: 3px solid var(--crit); color: var(--crit); }
+  .alert.info { background: rgba(121, 192, 255, 0.08); border-left: 3px solid var(--info); color: var(--info); }
+  .alert.ok { background: rgba(126, 226, 193, 0.08); border-left: 3px solid var(--accent); color: var(--accent); }
+  .alert strong { color: var(--text); }
+
+  .sub-head {
+    font-family: var(--mono); font-size: 11px; font-weight: 600;
+    color: var(--accent); letter-spacing: 0.05em; text-transform: uppercase;
+    margin: 14px 0 8px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--border);
+  }
+  .sub-head:first-child { margin-top: 0; }
+
+  .input-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .input-row {
+    display: flex; flex-direction: column; gap: 5px;
+  }
+  .input-row label {
+    font-family: var(--mono); font-size: 10.5px; color: var(--text-mute);
+    letter-spacing: 0.04em;
+  }
+  .input-row input {
+    background: var(--bg); border: 1px solid var(--border);
+    color: var(--text); padding: 8px 10px; border-radius: 5px;
+    font-family: var(--mono); font-size: 14px;
+    -webkit-appearance: none; appearance: none; width: 100%;
+  }
+  .input-row input:focus { outline: none; border-color: var(--accent-dim); }
+
+  .result-box {
+    background: var(--bg-elev-2); border: 1px solid var(--border);
+    border-radius: 8px; padding: 12px 14px;
+    margin-top: 10px;
+  }
+  .result-row {
+    display: flex; justify-content: space-between; align-items: baseline;
+    padding: 4px 0;
+  }
+  .result-lbl {
+    font-family: var(--mono); font-size: 11px; color: var(--text-mute);
+    letter-spacing: 0.04em;
+  }
+  .result-val {
+    font-family: var(--mono); font-size: 16px; font-weight: 600;
+    color: var(--accent);
+  }
+  .result-val.sub-text {
+    font-size: 11px; color: var(--text-dim); font-weight: 400;
+  }
+
+  /* Tanner stage buttons */
+  .stage-row {
+    display: flex; gap: 4px; margin-bottom: 10px;
+  }
+  .stage-btn {
+    flex: 1; background: var(--bg-elev-2); border: 1px solid var(--border);
+    color: var(--text-mute); cursor: pointer;
+    padding: 8px 4px; border-radius: 5px;
+    font-family: var(--mono); font-size: 13px; font-weight: 600;
+  }
+  .stage-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .stage-btn.active {
+    background: var(--accent); color: var(--bg);
+    border-color: var(--accent); font-weight: 700;
+  }
+
+  .stage-desc {
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: 6px; padding: 10px 12px;
+    font-size: 12.5px; color: var(--text-mute); line-height: 1.55;
+    margin-bottom: 12px; min-height: 60px;
+  }
+  .stage-desc strong { color: var(--text); }
+  .stage-desc .age {
+    font-family: var(--mono); color: var(--accent);
+    font-size: 11px; font-weight: 600;
+  }
+
+  .sex-content { display: none; }
+  .sex-content.active { display: block; }
+
+  .foot {
+    text-align: center; padding: 24px 16px;
+    font-family: var(--mono); font-size: 10.5px;
+    color: var(--text-dim); letter-spacing: 0.04em;
+  }
+
+  .warn-banner {
+    background: rgba(212, 165, 116, 0.08);
+    border: 1px solid rgba(212, 165, 116, 0.3);
+    border-radius: 6px; padding: 9px 12px;
+    margin-bottom: 12px;
+    font-family: var(--mono); font-size: 10.5px;
+    color: var(--warn); line-height: 1.5;
+  }
+
+  .empty-state {
+    text-align: center; padding: 20px;
+    background: rgba(212, 165, 116, 0.08);
+    border: 1px dashed rgba(212, 165, 116, 0.3);
+    border-radius: 8px; color: var(--warn);
+    font-family: var(--mono); font-size: 12.5px;
+    margin-bottom: 14px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="brand">
+      <div class="brand-left">
+        <span class="brand-mark">antropometri · cep</span>
+        <span class="brand-sub">poliklinik</span>
+      </div>
+      <button class="btn-reset" onclick="resetAll()">Sıfırla</button>
+    </div>
+
+    <div class="pt-bar">
+      <div class="pt-row">
+        <div class="pt-field">
+          <label>Cinsiyet</label>
+          <div class="sex-toggle" id="seg-sex">
+            <button class="sex-btn active" data-sex="e">E</button>
+            <button class="sex-btn" data-sex="k">K</button>
+          </div>
+        </div>
+        <div class="pt-field">
+          <label>Yaş <span style="font-weight:400; color:var(--text-dim);">(yıl)</span></label>
+          <input type="number" id="age" step="any" inputmode="decimal" placeholder="örn. 5.5">
+        </div>
+        <div class="pt-field">
+          <label>Boy <span style="font-weight:400; color:var(--text-dim);">(cm)</span></label>
+          <input type="number" id="height" step="any" inputmode="decimal" placeholder="0">
+        </div>
+        <div class="pt-field">
+          <label>Kilo <span style="font-weight:400; color:var(--text-dim);">(kg)</span></label>
+          <input type="number" id="weight" step="any" inputmode="decimal" placeholder="0">
+        </div>
+      </div>
+      <div class="bsa-row">
+        <div class="bsa-item">
+          <span class="bsa-label">BMI</span>
+          <span class="bsa-val" id="bmi-val">—</span>
+        </div>
+        <div class="bsa-item">
+          <span class="bsa-label">BSA (m²)</span>
+          <span class="bsa-val" id="bsa-val">—</span>
+        </div>
+        <div class="bsa-item">
+          <span class="bsa-label">Yaş (ay)</span>
+          <span class="bsa-val" id="months-val">—</span>
+        </div>
+      </div>
+    </div>
+
+    <nav class="tabs" id="tabs">
+      <button class="tab active" data-tab="buyume">Büyüme</button>
+      <button class="tab" data-tab="hedef">Boy Hedefi</button>
+      <button class="tab" data-tab="duz">Düzeltilmiş Yaş</button>
+      <button class="tab" data-tab="tanner">Tanner</button>
+    </nav>
+  </div>
+</header>
+
+<main>
+
+  <!-- ========== 1. BÜYÜME ========== -->
+  <section class="panel active" id="panel-buyume">
+
+    <div class="warn-banner">
+      Referans verileri yaklaşık WHO ve CDC değerleridir. Klinik kararda Bunaklaştırma için WHO Anthro veya orijinal grafikleri esas al.
+    </div>
+
+    <div class="ref-toggle" id="ref-toggle">
+      <button class="ref-btn" data-ref="who">WHO</button>
+      <button class="ref-btn" data-ref="cdc">CDC</button>
+      <button class="ref-btn active" data-ref="auto">Otomatik</button>
+    </div>
+    <div class="small-note" style="margin-top:-8px; margin-bottom: 14px;">
+      Otomatik: 0–5 yaş WHO, &gt; 5 yaş CDC. Manuel seçilebilir.
+    </div>
+
+    <div class="card" id="results-card">
+      <div class="card-head">
+        <div class="card-title">Z-skor + Persentil</div>
+        <span class="card-tag" id="ref-tag">WHO</span>
+      </div>
+
+      <div id="empty-state" class="empty-state">
+        Yaş + cinsiyet + (boy / kilo / baş çevresi) gir.
+      </div>
+
+      <div id="results-list" style="display:none;"></div>
+    </div>
+
+    <div class="card" id="hc-card">
+      <div class="card-head">
+        <div class="card-title">Baş Çevresi</div>
+        <span class="card-tag">0–5 yaş</span>
+      </div>
+      <div class="input-row" style="max-width:200px;">
+        <label>Baş çevresi (cm)</label>
+        <input type="number" id="hc" step="any" inputmode="decimal" placeholder="örn. 47">
+      </div>
+      <div id="hc-result" style="margin-top:12px;"></div>
+    </div>
+  </section>
+
+  <!-- ========== 2. BOY HEDEFİ ========== -->
+  <section class="panel" id="panel-hedef">
+
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title">Mid-Parental Boy</div>
+        <span class="card-tag">Genetik hedef</span>
+      </div>
+      <div class="note">Çocuğun genetik boy potansiyelini tahmin eder. Hedef aralık ± 8.5 cm.</div>
+
+      <div class="input-grid">
+        <div class="input-row">
+          <label>Anne boyu (cm)</label>
+          <input type="number" id="mom-h" step="any" inputmode="decimal" placeholder="0">
+        </div>
+        <div class="input-row">
+          <label>Baba boyu (cm)</label>
+          <input type="number" id="dad-h" step="any" inputmode="decimal" placeholder="0">
+        </div>
+      </div>
+
+      <div class="result-box" id="mph-box" style="display:none;">
+        <div class="result-row">
+          <span class="result-lbl">Mid-parental boy</span>
+          <span class="result-val" id="mph-val">—</span>
+        </div>
+        <div class="result-row">
+          <span class="result-lbl">Hedef aralık (± 8.5 cm)</span>
+          <span class="result-val" id="mph-range">—</span>
+        </div>
+      </div>
+      <div class="small-note">
+        Erkek: [(anne + baba) / 2] + 6.5 cm · Kız: [(anne + baba) / 2] − 6.5 cm · Hedef aralık ± 8.5 cm (genetik varyasyon).
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title">Büyüme Hızı</div>
+        <span class="card-tag">cm/yıl</span>
+      </div>
+      <div class="note">İki ölçüm arasında yıllık boy artış hızı. Beklenenden düşük → büyüme bozukluğu sorgu.</div>
+
+      <div class="sub-head">Ölçüm 1 (daha eski)</div>
+      <div class="input-grid">
+        <div class="input-row">
+          <label>Tarih (örn. 2025-06-15)</label>
+          <input type="date" id="gv-d1">
+        </div>
+        <div class="input-row">
+          <label>Boy (cm)</label>
+          <input type="number" id="gv-h1" step="any" inputmode="decimal" placeholder="0">
+        </div>
+      </div>
+
+      <div class="sub-head">Ölçüm 2 (yeni)</div>
+      <div class="input-grid">
+        <div class="input-row">
+          <label>Tarih</label>
+          <input type="date" id="gv-d2">
+        </div>
+        <div class="input-row">
+          <label>Boy (cm)</label>
+          <input type="number" id="gv-h2" step="any" inputmode="decimal" placeholder="0">
+        </div>
+      </div>
+
+      <div class="result-box" id="gv-box" style="display:none;">
+        <div class="result-row">
+          <span class="result-lbl">Aradan geçen süre</span>
+          <span class="result-val sub-text" id="gv-period">—</span>
+        </div>
+        <div class="result-row">
+          <span class="result-lbl">Boy artışı</span>
+          <span class="result-val sub-text" id="gv-diff">—</span>
+        </div>
+        <div class="result-row">
+          <span class="result-lbl">Büyüme hızı</span>
+          <span class="result-val" id="gv-rate">—</span>
+        </div>
+        <div id="gv-yorum"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title">Yaşa Göre Beklenen Büyüme Hızı</div>
+      </div>
+      <div class="note">
+        <strong>0–6 ay:</strong> ~30 cm/yıl<br>
+        <strong>6–12 ay:</strong> ~20 cm/yıl<br>
+        <strong>1–2 yaş:</strong> ~12 cm/yıl<br>
+        <strong>2–3 yaş:</strong> ~8 cm/yıl<br>
+        <strong>3 yaş – puberte:</strong> 5–7 cm/yıl (sabit fazz)<br>
+        <strong>Puberte sıçraması:</strong> kız 8–9 cm/yıl (ortalama 12 yaş zirve) · erkek 9–10 cm/yıl (ortalama 14 yaş zirve)<br>
+        <strong>Puberte sonrası:</strong> &lt; 2 cm/yıl, kemik füzyonu
+      </div>
+      <div class="alert info">
+        <strong>Patolojik eşik:</strong> 3 yaş – puberte arasında &lt; 4 cm/yıl ise endokrinoloji konsültasyonu (GH eksikliği, hipotiroidi, sistemik hastalık, sendromik).
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== 3. DÜZELTİLMİŞ YAŞ ========== -->
+  <section class="panel" id="panel-duz">
+
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title">Düzeltilmiş Yaş</div>
+        <span class="card-tag">Prematür</span>
+      </div>
+      <div class="note">
+        Prematür bebeklerde kronolojik yaş yerine düzeltilmiş yaş kullanılır. 40 haftaya tamamlandığı varsayılır.
+      </div>
+
+      <div class="input-grid">
+        <div class="input-row">
+          <label>Gestasyon haftası (doğumda)</label>
+          <input type="number" id="ga" step="any" inputmode="decimal" placeholder="örn. 32">
+        </div>
+        <div class="input-row">
+          <label>Kronolojik yaş (hafta)</label>
+          <input type="number" id="ca" step="any" inputmode="decimal" placeholder="örn. 16">
+        </div>
+      </div>
+
+      <div class="result-box" id="adj-box" style="display:none;">
+        <div class="result-row">
+          <span class="result-lbl">Prematürite</span>
+          <span class="result-val" id="adj-prem">—</span>
+        </div>
+        <div class="result-row">
+          <span class="result-lbl">Düzeltilmiş yaş</span>
+          <span class="result-val" id="adj-age">—</span>
+        </div>
+      </div>
+
+      <div class="alert info" style="margin-top:14px;">
+        <strong>Ne zaman düzeltilmiş yaş kullanılır:</strong><br>
+        • Büyüme değerlendirmesi: &lt; 3 yaş<br>
+        • Nörogelişim değerlendirmesi: &lt; 2 yaş<br>
+        • Aşı takvimi: <strong>kronolojik yaş</strong> kullanılır (düzeltme YOK)<br>
+        • Beslenme tedbirleri: çoğunlukla düzeltilmiş yaş
+      </div>
+
+      <div class="small-note">
+        Formül: düzeltilmiş yaş = kronolojik yaş − (40 hafta − gestasyon haftası)
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== 4. TANNER ========== -->
+  <section class="panel" id="panel-tanner">
+
+    <!-- Erkek -->
+    <div class="sex-content active" id="tanner-e">
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">Tanner — Erkek Genital (G)</div>
+          <span class="card-tag">Testis volüm</span>
+        </div>
+        <div class="stage-row" id="tg-row">
+          <button class="stage-btn" data-stage="g1">G1</button>
+          <button class="stage-btn" data-stage="g2">G2</button>
+          <button class="stage-btn" data-stage="g3">G3</button>
+          <button class="stage-btn" data-stage="g4">G4</button>
+          <button class="stage-btn" data-stage="g5">G5</button>
+        </div>
+        <div class="stage-desc" id="tg-desc">Bir evre seç.</div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">Tanner — Pubik Kıl (P)</div>
+        </div>
+        <div class="stage-row" id="tpe-row">
+          <button class="stage-btn" data-stage="p1">P1</button>
+          <button class="stage-btn" data-stage="p2">P2</button>
+          <button class="stage-btn" data-stage="p3">P3</button>
+          <button class="stage-btn" data-stage="p4">P4</button>
+          <button class="stage-btn" data-stage="p5">P5</button>
+        </div>
+        <div class="stage-desc" id="tpe-desc">Bir evre seç.</div>
+      </div>
+    </div>
+
+    <!-- Kız -->
+    <div class="sex-content" id="tanner-k">
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">Tanner — Kız Meme (B)</div>
+        </div>
+        <div class="stage-row" id="tb-row">
+          <button class="stage-btn" data-stage="b1">B1</button>
+          <button class="stage-btn" data-stage="b2">B2</button>
+          <button class="stage-btn" data-stage="b3">B3</button>
+          <button class="stage-btn" data-stage="b4">B4</button>
+          <button class="stage-btn" data-stage="b5">B5</button>
+        </div>
+        <div class="stage-desc" id="tb-desc">Bir evre seç.</div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">Tanner — Pubik Kıl (P)</div>
+        </div>
+        <div class="stage-row" id="tpk-row">
+          <button class="stage-btn" data-stage="p1">P1</button>
+          <button class="stage-btn" data-stage="p2">P2</button>
+          <button class="stage-btn" data-stage="p3">P3</button>
+          <button class="stage-btn" data-stage="p4">P4</button>
+          <button class="stage-btn" data-stage="p5">P5</button>
+        </div>
+        <div class="stage-desc" id="tpk-desc">Bir evre seç.</div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">Menarş</div>
+        </div>
+        <div class="note">
+          Ortalama <span class="num">12–13 yaş</span>, B3–B4 evresinde, peak height velocity sonrası.<br>
+          <strong>Erken menarş:</strong> &lt; 10 yaş · <strong>Geç menarş (primer amenore):</strong> 15 yaş hâlâ menarş yok veya B2 başlangıcından 5 yıl geçmiş.
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title">Sınır Yaşlar</div>
+      </div>
+      <div class="sub-head">Prekoks Puberte</div>
+      <div class="note">
+        <strong>Kız:</strong> 8 yaş öncesi B2 (meme tomurcuğu) veya pubik kıl<br>
+        <strong>Erkek:</strong> 9 yaş öncesi testis ≥ 4 mL (G2) veya pubik kıl
+      </div>
+      <div class="sub-head">Geç Puberte</div>
+      <div class="note">
+        <strong>Kız:</strong> 13 yaş hâlâ B1 (meme gelişimi yok) veya 15 yaş menarş yok<br>
+        <strong>Erkek:</strong> 14 yaş hâlâ G1 (testis &lt; 4 mL)
+      </div>
+      <div class="sub-head">Adrenarş</div>
+      <div class="note">
+        Aksiller + pubik kıllanmaya yol açan adrenal androjen artışı, 6–8 yaş başlar. Tanner evrelemesinden bağımsız. Erken adrenarş = pubik kıl &lt; 8 yaş kız / &lt; 9 yaş erkek (genelde benign).
+      </div>
+    </div>
+  </section>
+
+  <div class="foot">antropometri · cep · v0.1 · pediatri</div>
+
+</main>
+
+<script>
+/* ============================================================
+   ANTROPOMETRI · CEP
+   ============================================================ */
+
+let sex = 'e';
+let refSource = 'auto';
+
+const $ = id => document.getElementById(id);
+
+const tabs = document.querySelectorAll('.tab');
+const panels = document.querySelectorAll('.panel');
+tabs.forEach(t => {
+  t.addEventListener('click', () => {
+    tabs.forEach(x => x.classList.remove('active'));
+    panels.forEach(p => p.classList.remove('active'));
+    t.classList.add('active');
+    $('panel-' + t.dataset.tab).classList.add('active');
+  });
+});
+
+document.querySelectorAll('#seg-sex .sex-btn').forEach(b => {
+  b.addEventListener('click', () => {
+    document.querySelectorAll('#seg-sex .sex-btn').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    sex = b.dataset.sex;
+    updateTannerSex();
+    computeAll();
+  });
+});
+
+document.querySelectorAll('#ref-toggle .ref-btn').forEach(b => {
+  b.addEventListener('click', () => {
+    document.querySelectorAll('#ref-toggle .ref-btn').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    refSource = b.dataset.ref;
+    computeAll();
+  });
+});
+
+function fmt(n, d) {
+  if (!isFinite(n) || n === null) return '—';
+  if (d !== undefined) return n.toFixed(d);
+  if (Math.abs(n) >= 100) return n.toFixed(0);
+  if (Math.abs(n) >= 10) return n.toFixed(1);
+  return n.toFixed(2);
+}
+
+/* ============================================================
+   YAKLAŞIK WHO ve CDC PERSENTİL TABLOLARI
+   Yaş ay olarak, [p3, p10, p25, p50, p75, p90, p97]
+   ============================================================ */
+
+// WHO Weight-for-age (0-60 ay)
+const WHO_W_E = {
+  0:[2.5,2.8,3.0,3.3,3.7,4.0,4.4], 1:[3.4,3.8,4.1,4.5,5.0,5.4,5.8],
+  2:[4.4,4.7,5.1,5.6,6.0,6.6,7.1], 3:[5.1,5.5,5.9,6.4,6.9,7.4,7.9],
+  6:[6.4,6.9,7.4,7.9,8.5,9.0,9.7], 9:[7.2,7.7,8.3,8.9,9.6,10.2,10.9],
+  12:[8.0,8.4,9.0,9.6,10.4,11.2,12.0], 18:[9.0,9.5,10.2,10.9,11.7,12.7,13.7],
+  24:[9.7,10.4,11.2,12.2,13.2,14.2,15.3], 36:[11.3,12.1,13.1,14.3,15.6,16.9,18.3],
+  48:[12.7,13.7,14.8,16.3,17.8,19.3,21.0], 60:[14.1,15.2,16.5,18.3,20.0,21.8,23.7]
+};
+const WHO_W_K = {
+  0:[2.4,2.7,2.9,3.2,3.6,3.9,4.2], 1:[3.2,3.5,3.9,4.2,4.6,5.0,5.5],
+  2:[4.0,4.3,4.7,5.1,5.6,6.0,6.6], 3:[4.6,5.0,5.4,5.8,6.4,6.9,7.5],
+  6:[5.8,6.2,6.7,7.3,7.9,8.5,9.2], 9:[6.6,7.0,7.6,8.2,8.9,9.6,10.5],
+  12:[7.2,7.7,8.3,8.9,9.7,10.5,11.5], 18:[8.2,8.8,9.5,10.2,11.2,12.2,13.3],
+  24:[9.0,9.7,10.5,11.5,12.5,13.7,14.8], 36:[10.6,11.5,12.4,13.8,15.0,16.3,17.7],
+  48:[12.1,13.0,14.1,15.6,17.0,18.6,20.4], 60:[13.5,14.6,15.9,17.6,19.3,21.0,23.2]
+};
+
+// WHO Height-for-age (0-60 ay, cm)
+const WHO_H_E = {
+  0:[46.1,47.0,47.9,49.1,50.4,51.5,52.3], 3:[57.6,58.5,59.6,61.4,63.3,65.0,66.3],
+  6:[63.6,64.5,65.5,67.6,69.8,71.6,72.9], 12:[71.0,71.9,73.0,75.7,78.5,80.8,82.3],
+  18:[76.0,77.0,78.2,81.2,84.4,86.9,88.7], 24:[80.0,81.0,82.3,85.5,88.9,91.6,93.4],
+  36:[86.3,87.5,88.9,92.4,96.0,98.9,100.9], 48:[91.9,93.2,94.7,98.4,102.2,105.4,107.4],
+  60:[97.0,98.4,100.1,104.0,108.0,111.4,113.4]
+};
+const WHO_H_K = {
+  0:[45.4,46.3,47.2,48.4,49.7,50.7,51.5], 3:[55.8,56.8,57.9,59.7,61.5,63.2,64.4],
+  6:[61.7,62.6,63.7,65.6,67.6,69.3,70.6], 12:[68.7,69.6,70.7,73.5,76.3,78.6,80.0],
+  18:[74.0,74.9,76.0,79.0,82.1,84.5,86.0], 24:[78.4,79.4,80.5,83.8,87.1,89.7,91.4],
+  36:[85.0,86.2,87.4,90.8,94.3,97.1,99.0], 48:[90.7,92.0,93.4,97.1,100.9,103.9,106.0],
+  60:[95.8,97.1,98.6,102.7,106.9,110.2,112.5]
+};
+
+// CDC Weight (24-240 ay, kg) - yaklaşık değerler
+const CDC_W_E = {
+  24:[9.9,10.5,11.3,12.4,13.5,14.6,15.7], 36:[11.7,12.6,13.5,14.7,16.0,17.4,18.7],
+  48:[13.4,14.4,15.4,16.7,18.1,19.6,21.3], 60:[15.0,16.0,17.2,18.7,20.3,22.0,24.2],
+  72:[16.5,17.7,19.0,20.7,22.5,24.6,27.2], 84:[18.4,19.8,21.4,23.5,25.8,28.5,32.0],
+  96:[20.4,21.9,23.7,26.0,28.7,31.9,35.4], 108:[22.5,24.2,26.3,29.0,32.3,36.2,40.6],
+  120:[24.5,26.5,28.9,32.0,35.7,40.2,45.5], 132:[26.7,29.0,31.6,35.1,39.3,44.4,50.6],
+  144:[29.0,31.7,35.0,39.5,44.7,51.0,58.5], 156:[33.0,36.0,39.5,44.0,49.5,56.0,64.0],
+  168:[37.0,41.0,45.4,50.8,56.7,63.0,71.0], 180:[42.0,46.0,50.5,56.0,62.0,68.5,76.5],
+  192:[46.0,50.0,54.8,60.2,66.0,72.5,80.0], 204:[50.0,54.0,58.7,64.0,69.8,76.0,83.0],
+  216:[54.0,58.0,63.0,68.5,74.5,80.5,88.0], 228:[57.0,61.0,66.0,71.5,77.5,83.5,91.0],
+  240:[60.0,64.0,69.0,74.5,80.5,86.5,94.0]
+};
+const CDC_W_K = {
+  24:[9.4,10.0,10.8,11.8,12.9,14.0,15.2], 36:[11.0,11.9,12.8,14.0,15.3,16.7,18.0],
+  48:[12.5,13.5,14.7,16.0,17.6,19.2,21.0], 60:[14.0,15.1,16.4,18.0,19.8,21.7,24.0],
+  72:[15.4,16.6,18.1,20.0,22.0,24.4,27.5], 84:[17.0,18.4,20.1,22.3,24.8,27.7,31.5],
+  96:[19.0,20.6,22.5,25.0,28.0,31.4,35.7], 108:[21.0,22.9,25.0,28.0,31.7,36.1,41.5],
+  120:[23.3,25.4,27.8,31.4,35.8,41.0,47.5], 132:[25.8,28.1,31.0,35.0,40.0,46.0,53.0],
+  144:[28.7,31.5,34.7,39.4,45.0,52.0,60.0], 156:[32.0,35.0,38.5,43.5,49.5,56.5,64.5],
+  168:[35.0,38.0,42.0,47.0,53.0,60.0,68.0], 180:[37.5,40.5,44.5,49.5,55.0,62.0,70.0],
+  192:[39.5,42.5,46.5,51.5,57.5,64.5,72.5], 204:[40.5,43.5,47.5,52.5,58.5,65.5,73.5],
+  216:[41.0,44.0,48.0,53.0,59.0,66.0,74.0], 228:[41.5,44.5,48.5,53.5,59.5,66.5,74.5],
+  240:[42.0,45.0,49.0,54.0,60.0,67.0,75.0]
+};
+
+// CDC Height (24-240 ay, cm) - yaklaşık değerler
+const CDC_H_E = {
+  24:[81.4,82.7,84.2,86.8,89.4,91.5,93.0], 36:[88.4,89.9,91.7,94.9,98.0,100.7,102.4],
+  48:[95.0,96.7,98.6,102.3,105.9,109.0,111.0], 60:[101.5,103.4,105.4,109.2,113.0,116.4,118.7],
+  72:[107.5,109.5,111.6,115.7,119.8,123.5,126.1], 84:[113.3,115.4,117.7,121.9,126.3,130.3,133.1],
+  96:[118.8,121.0,123.4,127.9,132.5,136.9,139.9], 108:[124.0,126.4,129.0,133.7,138.6,143.3,146.6],
+  120:[129.0,131.4,134.2,139.2,144.4,149.5,153.1], 132:[133.9,136.5,139.5,144.8,150.4,156.0,160.0],
+  144:[139.1,141.9,145.2,150.7,156.7,162.7,167.0], 156:[145.1,148.2,151.7,157.6,163.9,170.2,174.8],
+  168:[151.7,154.9,158.6,164.7,171.2,177.5,182.1], 180:[157.5,160.7,164.4,170.6,177.0,183.0,187.2],
+  192:[161.5,164.5,168.1,174.0,180.0,185.7,189.5], 204:[163.5,166.5,170.0,175.6,181.4,186.7,190.2],
+  216:[164.5,167.5,170.8,176.3,181.9,187.0,190.5], 228:[165.0,168.0,171.2,176.6,182.2,187.2,190.7],
+  240:[165.4,168.4,171.6,176.9,182.5,187.5,191.0]
+};
+const CDC_H_K = {
+  24:[80.4,81.7,83.2,86.0,88.5,90.6,92.0], 36:[87.4,88.9,90.6,93.9,96.9,99.6,101.3],
+  48:[94.0,95.7,97.6,101.3,104.9,107.9,109.9], 60:[100.0,102.0,104.0,108.0,112.0,115.5,118.0],
+  72:[106.0,108.0,110.2,114.4,118.5,122.3,125.0], 84:[111.5,113.7,116.0,120.3,124.7,128.6,131.4],
+  96:[117.0,119.2,121.6,126.0,130.5,134.7,137.6], 108:[122.0,124.3,126.9,131.6,136.6,141.0,144.2],
+  120:[127.0,129.5,132.3,137.4,142.8,147.7,151.3], 132:[132.3,135.0,138.2,143.7,149.6,154.9,158.7],
+  144:[138.0,140.8,144.2,149.9,155.9,161.2,165.0], 156:[143.5,146.5,149.9,155.5,161.2,166.0,169.4],
+  168:[148.0,151.0,154.2,159.5,164.7,169.0,172.0], 180:[150.5,153.5,156.5,161.5,166.5,170.5,173.5],
+  192:[151.7,154.7,157.7,162.5,167.4,171.3,174.2], 204:[152.5,155.4,158.4,163.2,168.0,171.8,174.7],
+  216:[152.9,155.9,158.8,163.5,168.3,172.1,175.0], 228:[153.3,156.2,159.1,163.8,168.6,172.4,175.3],
+  240:[153.5,156.4,159.3,164.0,168.8,172.6,175.5]
+};
+
+// WHO BMI (0-60 ay) - yaklaşık değerler
+const WHO_BMI_E = {
+  0:[10.2,10.9,11.7,13.4,15.1,16.3,17.3], 6:[14.0,14.8,15.8,17.3,18.9,20.1,21.1],
+  12:[13.7,14.4,15.3,16.8,18.4,19.6,20.6], 24:[13.4,14.2,15.0,16.4,17.9,19.0,20.0],
+  36:[13.2,14.0,14.8,16.0,17.3,18.4,19.4], 48:[13.0,13.8,14.6,15.8,17.0,18.0,19.0],
+  60:[12.9,13.7,14.5,15.6,16.7,17.7,18.7]
+};
+const WHO_BMI_K = {
+  0:[10.0,10.7,11.5,13.3,14.9,16.1,17.0], 6:[13.4,14.2,15.2,16.6,18.2,19.4,20.5],
+  12:[13.1,13.9,14.7,16.2,17.7,19.0,20.0], 24:[12.9,13.7,14.5,15.9,17.4,18.7,19.7],
+  36:[12.8,13.6,14.4,15.7,17.1,18.3,19.4], 48:[12.7,13.5,14.3,15.5,16.9,18.1,19.2],
+  60:[12.6,13.4,14.2,15.4,16.7,18.0,19.2]
+};
+
+// CDC BMI (24-240 ay) - yaklaşık değerler
+const CDC_BMI_E = {
+  24:[14.5,14.9,15.5,16.5,17.4,18.3,19.0], 36:[14.0,14.5,15.0,15.9,16.8,17.7,18.5],
+  48:[13.8,14.2,14.7,15.5,16.4,17.4,18.5], 60:[13.6,14.0,14.5,15.3,16.3,17.5,19.0],
+  72:[13.6,14.0,14.5,15.4,16.5,18.0,20.0], 84:[13.7,14.1,14.6,15.6,16.9,18.7,21.2],
+  96:[13.8,14.3,14.9,16.0,17.6,19.5,22.4], 108:[14.0,14.5,15.2,16.5,18.3,20.5,23.7],
+  120:[14.3,14.9,15.6,17.0,19.0,21.5,25.0], 132:[14.6,15.3,16.1,17.6,19.8,22.5,26.2],
+  144:[15.0,15.7,16.6,18.2,20.6,23.5,27.3], 156:[15.5,16.2,17.1,18.9,21.3,24.4,28.2],
+  168:[15.9,16.7,17.7,19.6,22.0,25.2,29.0], 180:[16.4,17.2,18.3,20.2,22.7,25.9,29.7],
+  192:[16.9,17.7,18.8,20.7,23.3,26.5,30.2], 204:[17.3,18.2,19.3,21.2,23.7,26.9,30.5],
+  216:[17.6,18.6,19.7,21.6,24.0,27.1,30.7], 228:[17.9,18.9,20.0,21.9,24.2,27.3,30.8],
+  240:[18.0,19.0,20.2,22.0,24.4,27.4,30.9]
+};
+const CDC_BMI_K = {
+  24:[14.2,14.7,15.3,16.3,17.2,18.1,18.8], 36:[13.8,14.3,14.8,15.7,16.6,17.5,18.3],
+  48:[13.5,14.0,14.5,15.3,16.3,17.3,18.4], 60:[13.3,13.8,14.3,15.2,16.3,17.6,19.2],
+  72:[13.3,13.8,14.3,15.3,16.6,18.2,20.4], 84:[13.4,13.9,14.5,15.6,17.1,19.0,21.7],
+  96:[13.6,14.1,14.8,16.0,17.7,19.9,23.0], 108:[13.8,14.4,15.2,16.6,18.5,20.9,24.3],
+  120:[14.1,14.8,15.6,17.2,19.3,21.9,25.5], 132:[14.5,15.3,16.2,17.9,20.1,22.9,26.7],
+  144:[15.0,15.8,16.8,18.6,20.9,23.8,27.8], 156:[15.5,16.4,17.5,19.4,21.7,24.6,28.7],
+  168:[16.0,17.0,18.2,20.1,22.5,25.4,29.4], 180:[16.5,17.5,18.8,20.7,23.1,26.0,30.0],
+  192:[16.9,18.0,19.3,21.3,23.7,26.5,30.5], 204:[17.3,18.4,19.7,21.7,24.1,26.9,30.8],
+  216:[17.6,18.7,20.0,22.0,24.4,27.2,31.0], 228:[17.8,18.9,20.2,22.2,24.6,27.4,31.2],
+  240:[18.0,19.1,20.4,22.4,24.8,27.5,31.3]
+};
+
+// WHO Baş çevresi (0-60 ay, cm)
+const WHO_HC_E = {
+  0:[32.1,32.8,33.4,34.5,35.4,36.1,36.9], 1:[35.1,35.8,36.5,37.6,38.5,39.2,40.0],
+  3:[38.3,39.0,39.6,40.5,41.4,42.1,42.7], 6:[41.5,42.1,42.7,43.5,44.4,45.0,45.6],
+  12:[44.2,44.8,45.3,46.1,47.0,47.7,48.3], 24:[46.6,47.2,47.7,48.3,49.2,49.9,50.5],
+  36:[48.0,48.6,49.0,49.6,50.5,51.2,51.8], 48:[48.9,49.4,49.9,50.5,51.3,52.0,52.6],
+  60:[49.6,50.1,50.5,51.1,52.0,52.7,53.3]
+};
+const WHO_HC_K = {
+  0:[31.7,32.4,33.0,34.0,34.9,35.6,36.4], 1:[34.3,35.0,35.7,36.7,37.6,38.4,39.1],
+  3:[37.3,38.0,38.7,39.5,40.4,41.1,41.7], 6:[40.3,40.9,41.5,42.2,43.1,43.8,44.4],
+  12:[43.2,43.8,44.3,45.0,45.8,46.5,47.1], 24:[45.5,46.1,46.6,47.2,48.1,48.8,49.4],
+  36:[46.9,47.5,48.0,48.6,49.5,50.2,50.8], 48:[47.8,48.3,48.8,49.4,50.3,51.0,51.6],
+  60:[48.4,48.9,49.4,50.0,50.9,51.6,52.2]
+};
+
+const TABLES = {
+  who: { w: { e: WHO_W_E, k: WHO_W_K }, h: { e: WHO_H_E, k: WHO_H_K }, bmi: { e: WHO_BMI_E, k: WHO_BMI_K }, hc: { e: WHO_HC_E, k: WHO_HC_K } },
+  cdc: { w: { e: CDC_W_E, k: CDC_W_K }, h: { e: CDC_H_E, k: CDC_H_K }, bmi: { e: CDC_BMI_E, k: CDC_BMI_K } }
+};
+
+/* ============================================================
+   HESAP FONKSİYONLARI
+   ============================================================ */
+
+const PERCENTILES = [3, 10, 25, 50, 75, 90, 97];
+
+function interpolatePctValues(table, ageMonths) {
+  const ages = Object.keys(table).map(Number).sort((a, b) => a - b);
+  if (ageMonths <= ages[0]) return table[ages[0]];
+  if (ageMonths >= ages[ages.length - 1]) return table[ages[ages.length - 1]];
+
+  let lo = ages[0], hi = ages[ages.length - 1];
+  for (let i = 0; i < ages.length - 1; i++) {
+    if (ages[i] <= ageMonths && ageMonths <= ages[i + 1]) {
+      lo = ages[i]; hi = ages[i + 1]; break;
+    }
+  }
+  const t = (ageMonths - lo) / (hi - lo);
+  return table[lo].map((v, i) => v + t * (table[hi][i] - v));
+}
+
+function valueToPercentile(value, pctValues) {
+  // pctValues: 7 sayı (p3, p10, p25, p50, p75, p90, p97)
+  if (value <= pctValues[0]) {
+    const ratio = value / pctValues[0];
+    return Math.max(0.1, 3 * ratio);
+  }
+  if (value >= pctValues[6]) {
+    const extra = (value - pctValues[6]) / (pctValues[6] - pctValues[5]);
+    return Math.min(99.9, 97 + extra * 3);
+  }
+  for (let i = 0; i < pctValues.length - 1; i++) {
+    if (value >= pctValues[i] && value <= pctValues[i + 1]) {
+      const t = (value - pctValues[i]) / (pctValues[i + 1] - pctValues[i]);
+      return PERCENTILES[i] + t * (PERCENTILES[i + 1] - PERCENTILES[i]);
+    }
+  }
+  return 50;
+}
+
+// Abramowitz-Stegun approximation: percentile → z-skor
+function percentileToZ(p) {
+  const q = p / 100;
+  if (q <= 0.001) return -3.09;
+  if (q >= 0.999) return 3.09;
+  const a = [2.515517, 0.802853, 0.010328];
+  const b = [1.432788, 0.189269, 0.001308];
+  const r = q < 0.5 ? q : 1 - q;
+  const t = Math.sqrt(-2 * Math.log(r));
+  const num = a[0] + a[1] * t + a[2] * t * t;
+  const den = 1 + b[0] * t + b[1] * t * t + b[2] * t * t * t;
+  const z = t - num / den;
+  return q < 0.5 ? -z : z;
+}
+
+function categorize(param, p) {
+  // param: 'w' (ağırlık), 'h' (boy), 'bmi', 'hc'
+  if (param === 'h') {
+    if (p < 3) return { cls: 'crit', label: 'Ağır kısa' };
+    if (p < 10) return { cls: 'warn', label: 'Kısa' };
+    if (p > 97) return { cls: 'info', label: 'Çok uzun' };
+    if (p > 90) return { cls: 'info', label: 'Uzun' };
+    return { cls: 'ok', label: 'Normal' };
+  }
+  if (param === 'w') {
+    if (p < 3) return { cls: 'crit', label: 'Ağır düşük' };
+    if (p < 10) return { cls: 'warn', label: 'Düşük' };
+    if (p > 97) return { cls: 'crit', label: 'Çok yüksek' };
+    if (p > 85) return { cls: 'warn', label: 'Kilolu' };
+    return { cls: 'ok', label: 'Normal' };
+  }
+  if (param === 'bmi') {
+    if (p < 5) return { cls: 'crit', label: 'Zayıf' };
+    if (p > 99) return { cls: 'crit', label: 'Ağır obez' };
+    if (p > 95) return { cls: 'crit', label: 'Obez' };
+    if (p > 85) return { cls: 'warn', label: 'Kilolu' };
+    return { cls: 'ok', label: 'Normal' };
+  }
+  if (param === 'hc') {
+    if (p < 3) return { cls: 'crit', label: 'Mikrosefali' };
+    if (p > 97) return { cls: 'crit', label: 'Makrosefali' };
+    return { cls: 'ok', label: 'Normal' };
+  }
+  return { cls: 'mute', label: '—' };
+}
+
+function getReference(ageYears) {
+  if (refSource === 'who') return 'who';
+  if (refSource === 'cdc') return 'cdc';
+  // auto
+  return ageYears <= 5 ? 'who' : 'cdc';
+}
+
+/* ============================================================
+   ÜST BAR HESAPLAMALARI
+   ============================================================ */
+
+function computeTopBar() {
+  const age = parseFloat($('age').value);
+  const h = parseFloat($('height').value);
+  const w = parseFloat($('weight').value);
+
+  // Yaş (ay)
+  if (isFinite(age)) {
+    const months = age * 12;
+    $('months-val').textContent = months >= 12 ? fmt(months, 0) : fmt(months, 1);
+  } else {
+    $('months-val').textContent = '—';
+  }
+
+  // BMI
+  if (isFinite(h) && isFinite(w) && h > 0) {
+    const hM = h / 100;
+    const bmi = w / (hM * hM);
+    $('bmi-val').textContent = fmt(bmi);
+  } else {
+    $('bmi-val').textContent = '—';
+  }
+
+  // BSA (Mosteller)
+  if (isFinite(h) && isFinite(w) && h > 0 && w > 0) {
+    const bsa = Math.sqrt((h * w) / 3600);
+    $('bsa-val').textContent = fmt(bsa);
+  } else {
+    $('bsa-val').textContent = '—';
+  }
+}
+
+/* ============================================================
+   BÜYÜME SEKMESI
+   ============================================================ */
+
+function computeGrowth() {
+  const age = parseFloat($('age').value);
+  const h = parseFloat($('height').value);
+  const w = parseFloat($('weight').value);
+  const hc = parseFloat($('hc').value);
+
+  if (!isFinite(age) || age < 0) {
+    $('empty-state').style.display = 'block';
+    $('results-list').style.display = 'none';
+    $('hc-result').innerHTML = '';
+    return;
+  }
+
+  const haveAny = isFinite(h) || isFinite(w);
+  if (!haveAny) {
+    $('empty-state').style.display = 'block';
+    $('results-list').style.display = 'none';
+  } else {
+    $('empty-state').style.display = 'none';
+    $('results-list').style.display = 'block';
+  }
+
+  const months = age * 12;
+  const ref = getReference(age);
+  $('ref-tag').textContent = ref.toUpperCase();
+
+  let html = '';
+
+  // Ağırlık
+  if (isFinite(w) && w > 0) {
+    const pctVals = interpolatePctValues(TABLES[ref].w[sex], months);
+    const p = valueToPercentile(w, pctVals);
+    const z = percentileToZ(p);
+    const cat = categorize('w', p);
+    html += renderRow('Ağırlık', `${fmt(w)} kg`, p, z, cat);
+  }
+
+  // Boy
+  if (isFinite(h) && h > 0) {
+    const pctVals = interpolatePctValues(TABLES[ref].h[sex], months);
+    const p = valueToPercentile(h, pctVals);
+    const z = percentileToZ(p);
+    const cat = categorize('h', p);
+    html += renderRow('Boy', `${fmt(h)} cm`, p, z, cat);
+  }
+
+  // BMI
+  if (isFinite(h) && isFinite(w) && h > 0 && w > 0) {
+    const hM = h / 100;
+    const bmi = w / (hM * hM);
+    // BMI 24 ay altında zorlama
+    if (months >= 24 || ref === 'who') {
+      const pctVals = interpolatePctValues(TABLES[ref].bmi[sex], months);
+      const p = valueToPercentile(bmi, pctVals);
+      const z = percentileToZ(p);
+      const cat = categorize('bmi', p);
+      html += renderRow('BMI', `${fmt(bmi)} kg/m²`, p, z, cat);
+    }
+  }
+
+  $('results-list').innerHTML = html;
+
+  // Baş çevresi (ayrı kart, 0-60 ay için)
+  if (isFinite(hc) && hc > 0 && months <= 60) {
+    const pctVals = interpolatePctValues(TABLES.who.hc[sex], months);
+    const p = valueToPercentile(hc, pctVals);
+    const z = percentileToZ(p);
+    const cat = categorize('hc', p);
+    $('hc-result').innerHTML = renderRow('Baş çevresi', `${fmt(hc)} cm`, p, z, cat);
+  } else if (isFinite(hc) && hc > 0) {
+    $('hc-result').innerHTML = `<div class="alert info">Baş çevresi referans aralığı 0–5 yaş için. Bu yaşta rutin değerlendirme yok.</div>`;
+  } else {
+    $('hc-result').innerHTML = '';
+  }
+}
+
+function renderRow(name, valueStr, p, z, cat) {
+  let pTxt = p < 1 ? `<1` : p > 99 ? `>99` : fmt(p, 1);
+  return `
+    <div class="z-row">
+      <div class="z-name">${name}<span class="meta">${valueStr}</span></div>
+      <div class="z-vals">
+        <div class="z-val ${cat.cls}"><span class="lbl">Z</span>${fmt(z, 2)}</div>
+        <div class="z-val ${cat.cls}"><span class="lbl">p</span>${pTxt}</div>
+      </div>
+      <span class="z-cat ${cat.cls}">${cat.label}</span>
+    </div>
+  `;
+}
+
+/* ============================================================
+   BOY HEDEFI + BÜYÜME HIZI
+   ============================================================ */
+
+function computeMph() {
+  const mom = parseFloat($('mom-h').value);
+  const dad = parseFloat($('dad-h').value);
+  if (!isFinite(mom) || !isFinite(dad)) {
+    $('mph-box').style.display = 'none';
+    return;
+  }
+  const offset = sex === 'e' ? 6.5 : -6.5;
+  const mph = (mom + dad) / 2 + offset;
+  $('mph-box').style.display = 'block';
+  $('mph-val').textContent = `${fmt(mph, 1)} cm`;
+  $('mph-range').textContent = `${fmt(mph - 8.5, 1)} – ${fmt(mph + 8.5, 1)} cm`;
+}
+
+function computeGrowthVelocity() {
+  const d1 = $('gv-d1').value;
+  const d2 = $('gv-d2').value;
+  const h1 = parseFloat($('gv-h1').value);
+  const h2 = parseFloat($('gv-h2').value);
+
+  if (!d1 || !d2 || !isFinite(h1) || !isFinite(h2)) {
+    $('gv-box').style.display = 'none';
+    return;
+  }
+
+  const date1 = new Date(d1);
+  const date2 = new Date(d2);
+  const days = (date2 - date1) / (1000 * 60 * 60 * 24);
+  if (days <= 0) {
+    $('gv-box').style.display = 'block';
+    $('gv-period').textContent = 'Tarih hatası';
+    $('gv-rate').textContent = '—';
+    return;
+  }
+  const months = days / 30.44;
+  const years = days / 365.25;
+  const diff = h2 - h1;
+  const rate = diff / years;
+
+  $('gv-box').style.display = 'block';
+  $('gv-period').textContent = `${fmt(months, 1)} ay (${fmt(days, 0)} gün)`;
+  $('gv-diff').textContent = `${fmt(diff, 1)} cm`;
+  $('gv-rate').textContent = `${fmt(rate, 1)} cm/yıl`;
+
+  // Yorum
+  const age = parseFloat($('age').value);
+  let cls = 'info', txt = '';
+  if (isFinite(age)) {
+    let beklenenAlt, beklenenUst, durum;
+    if (age < 0.5) { beklenenAlt = 25; beklenenUst = 35; durum = '0–6 ay'; }
+    else if (age < 1) { beklenenAlt = 15; beklenenUst = 25; durum = '6–12 ay'; }
+    else if (age < 2) { beklenenAlt = 10; beklenenUst = 14; durum = '1–2 yaş'; }
+    else if (age < 3) { beklenenAlt = 6; beklenenUst = 10; durum = '2–3 yaş'; }
+    else if (age < 10) { beklenenAlt = 4; beklenenUst = 7; durum = '3–10 yaş'; }
+    else if (age < 16) { beklenenAlt = 4; beklenenUst = 10; durum = 'puberte dönemi'; }
+    else { beklenenAlt = 0; beklenenUst = 4; durum = 'puberte sonrası'; }
+
+    if (rate < beklenenAlt) {
+      cls = 'crit';
+      txt = `<strong>Düşük büyüme hızı.</strong> ${durum} için beklenen ${beklenenAlt}–${beklenenUst} cm/yıl. Endokrinoloji konsültasyonu — GH eksikliği, hipotiroidi, kronik hastalık taraması.`;
+    } else if (rate > beklenenUst) {
+      cls = 'warn';
+      txt = `<strong>Yüksek büyüme hızı.</strong> ${durum} için beklenen ${beklenenAlt}–${beklenenUst} cm/yıl. Prekoks puberte? GH fazlalığı? Endokrin değerlendirme.`;
+    } else {
+      cls = 'ok';
+      txt = `<strong>Normal aralıkta.</strong> ${durum} için beklenen ${beklenenAlt}–${beklenenUst} cm/yıl.`;
+    }
+  } else {
+    txt = 'Yaşı üst barda gir, yaşa göre yorum çıksın.';
+  }
+  $('gv-yorum').innerHTML = `<div class="alert ${cls}" style="margin-top:10px;">${txt}</div>`;
+}
+
+/* ============================================================
+   DÜZELTİLMİŞ YAŞ
+   ============================================================ */
+
+function computeAdjusted() {
+  const ga = parseFloat($('ga').value);
+  const ca = parseFloat($('ca').value);
+  if (!isFinite(ga) || !isFinite(ca)) {
+    $('adj-box').style.display = 'none';
+    return;
+  }
+  const prematurite = 40 - ga; // hafta
+  const adjusted = ca - prematurite; // hafta
+
+  $('adj-box').style.display = 'block';
+  $('adj-prem').textContent = `${fmt(prematurite, 1)} hafta erken`;
+
+  if (adjusted < 0) {
+    $('adj-age').textContent = `0 (henüz beklenen doğum tarihine ulaşmamış)`;
+  } else if (adjusted < 52) {
+    $('adj-age').textContent = `${fmt(adjusted, 1)} hafta (~${fmt(adjusted * 7 / 30.44, 1)} ay)`;
+  } else {
+    $('adj-age').textContent = `${fmt(adjusted / 52, 2)} yaş (~${fmt(adjusted * 7 / 30.44, 1)} ay)`;
+  }
+}
+
+/* ============================================================
+   TANNER
+   ============================================================ */
+
+const tannerData = {
+  // Erkek genital
+  g1: { title: 'G1 — Prepubertal', desc: 'Testis ≤ 3 mL · prepubertal · penis çocukluk hali.', age: '< 9 yaş normal' },
+  g2: { title: 'G2 — Testis büyümesi başlar', desc: 'Testis 4 mL · skrotum kalınlaşma, kırmızılaşma. <strong>Pubertenin ilk objektif bulgusu.</strong>', age: '9–14 yaş (ort. 11.5)' },
+  g3: { title: 'G3', desc: 'Testis 8–10 mL · penis uzar (boy artar, çap az). Pubarş bu evrede başlar.', age: '10–14.5 yaş (ort. 12.5)' },
+  g4: { title: 'G4', desc: 'Testis 12–15 mL · penis kalınlaşır, glans gelişir · skrotum koyulaşır. Peak height velocity bu evrede.', age: '11.5–15.5 yaş (ort. 13.5)' },
+  g5: { title: 'G5 — Yetişkin', desc: 'Testis ≥ 15 mL · yetişkin genital. Boy artışı bitiyor.', age: '13–17 yaş (ort. 14.5)' },
+  // Pubik kıl (erkek + kız ortak isimle)
+  p1: { title: 'P1 — Prepubertal', desc: 'Karın duvarındaki vellus kıllarından farklı kıl yok.', age: '' },
+  p2: { title: 'P2', desc: 'Birkaç düz, ince, hafif pigmentli kıl, penis tabanı veya labia kenarı.', age: 'Erkek 11.5 · Kız 11' },
+  p3: { title: 'P3', desc: 'Daha koyu, kıvrımlı, kalınlaşmış kıllar, mons üzerine yayılır.', age: 'Erkek 12.5 · Kız 11.5' },
+  p4: { title: 'P4', desc: 'Yetişkin tipte kıl, ama uyluğa yayılmamış (üçgen şekil dar).', age: 'Erkek 13.5 · Kız 12.5' },
+  p5: { title: 'P5 — Yetişkin', desc: 'Yetişkin pubik kıl, uyluk içine yayılım (klasik elmas/üçgen).', age: 'Erkek 14.5 · Kız 14' },
+  // Kız meme
+  b1: { title: 'B1 — Prepubertal', desc: 'Sadece papilla yükselik, meme dokusu yok.', age: '< 8 yaş normal' },
+  b2: { title: 'B2 — Meme tomurcuğu', desc: 'Meme + papilla küçük yükselti olarak çıkar · areola genişler. <strong>Pubertenin ilk bulgusu.</strong>', age: '8–13 yaş (ort. 10.5)' },
+  b3: { title: 'B3', desc: 'Meme + areola daha büyük, hâlâ tek konturlu (kontur ayrımı yok). Glandular doku belirgin.', age: '10–14 yaş (ort. 11.5)' },
+  b4: { title: 'B4', desc: '<strong>Areola + papilla ikincil yükselti</strong> oluşturur, memenin üzerinde ayrı tepecik. Menarş bu evrede çoğunlukla.', age: '11–15 yaş (ort. 12.5)' },
+  b5: { title: 'B5 — Yetişkin', desc: 'Areola ikincil yükseltisi kaybolur, meme + papilla tek konturda. Yetişkin meme.', age: '12–18 yaş (ort. 14)' }
+};
+
+function updateTannerSex() {
+  document.querySelectorAll('.sex-content').forEach(el => el.classList.remove('active'));
+  $('tanner-' + sex).classList.add('active');
+}
+
+document.querySelectorAll('.stage-row').forEach(row => {
+  row.querySelectorAll('.stage-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      row.querySelectorAll('.stage-btn').forEach(x => x.classList.remove('active'));
+      btn.classList.add('active');
+      const stage = btn.dataset.stage;
+      const descId = row.id.replace('-row', '-desc');
+      const d = tannerData[stage];
+      if (d) {
+        $(descId).innerHTML = `<strong>${d.title}</strong><br>${d.desc}${d.age ? `<br><span class="age">${d.age}</span>` : ''}`;
+      }
+    });
+  });
+});
+
+/* ============================================================
+   GENEL HESAP
+   ============================================================ */
+
+function computeAll() {
+  computeTopBar();
+  computeGrowth();
+  computeMph();
+  computeGrowthVelocity();
+  computeAdjusted();
+}
+
+['age', 'height', 'weight', 'hc', 'mom-h', 'dad-h', 'ga', 'ca', 'gv-h1', 'gv-h2'].forEach(id => {
+  $(id).addEventListener('input', computeAll);
+});
+$('gv-d1').addEventListener('change', computeAll);
+$('gv-d2').addEventListener('change', computeAll);
+
+function resetAll() {
+  ['age', 'height', 'weight', 'hc', 'mom-h', 'dad-h', 'ga', 'ca', 'gv-h1', 'gv-h2', 'gv-d1', 'gv-d2'].forEach(id => $(id).value = '');
+  document.querySelectorAll('.stage-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.stage-desc').forEach(d => d.textContent = 'Bir evre seç.');
+  computeAll();
+}
+
+updateTannerSex();
+computeAll();
+</script>
+
+</body>
+</html>
